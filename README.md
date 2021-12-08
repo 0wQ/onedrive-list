@@ -33,7 +33,7 @@ auth_endpoint = https://login.microsoftonline.com/common/oauth2/v2.0  # 选填
 drive_api = https://graph.microsoft.com/v1.0/me/drive                 # 选填
 
 gist_id =                                                             # 必填
-gist_token =                                                           # 必填
+gist_token =                                                          # 必填
 gist_filename = onedrive-token.json                                   # 选填
 
 base_dir = /                                                          # 选填
