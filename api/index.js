@@ -7,21 +7,23 @@ exports.default = async (req, res) => {
 
   const {
     path = '',
-    raw = '0',
-    album = '0',
+    raw = '',
+    album = '',
   } = req.query
 
-  const isFolder = path.endsWith('/') || path === ''
-  const isRaw = raw === '1'
-  const isAlbum = album === '1'
+  const isRaw = raw === '1' || raw === 'true'
+  const isAlbum = album === '1' || album === 'true'
 
   console.time(`${count} getAccessToken()`)
   const access_token = await getAccessToken()
   console.timeEnd(`${count} getAccessToken()`)
-  if (!access_token) return
+  if (!access_token) {
+    console.error('access_token is empty.')
+    return
+  }
 
   console.time(`${count} getItem()`)
-  const data = await getItem(path, access_token, isFolder, isRaw, isAlbum)
+  const data = await getItem(path, access_token, isRaw, isAlbum)
   console.timeEnd(`${count} getItem()`)
 
   res.setHeader('Access-Control-Allow-Origin', '*')

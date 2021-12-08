@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node app.js",
     "dev": "nodemon app.js",
-    "auth": "node auth-cli/auth.js"
+    "auth": "npx @beetcb/ms-graph-cli"
   },
   "author": "Mizore",
   "license": "MIT",

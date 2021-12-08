@@ -5,14 +5,17 @@ const Gist = class {
   #gist_id
   #gist_filename
 
-  constructor(auth, gist_id, gist_filename) {
-    this.#octokit = new Octokit({ auth: auth })
+  constructor(gist_token, gist_id, gist_filename) {
+    if (!gist_token || !gist_id || !gist_filename) {
+      throw new Error('gist_token, gist_id, gist_filename are required.')
+    }
+    this.#octokit = new Octokit({ auth: gist_token })
     this.#gist_id = gist_id
     this.#gist_filename = gist_filename
   }
 
   async read() {
-    console.log('fetch data from gist:', this.#gist_filename)
+    console.log('Fetch data from gist:', this.#gist_filename)
     const response = await this.#octokit.request('GET /gists/{gist_id}', {
       gist_id: this.#gist_id
     })
@@ -21,7 +24,7 @@ const Gist = class {
 
   async write(data) {
     const data_str = JSON.stringify(data, null, 2)
-    console.log('updated:', data_str)
+    console.log('Update gist:', this.#gist_filename)
     const response = await this.#octokit.request('PATCH /gists/{gist_id}', {
       gist_id: this.#gist_id,
       files: {
@@ -34,13 +37,19 @@ const Gist = class {
   }
 }
 
-const { gist_token, gist_id, gist_filename = 'onedrive-token.json' } = process.env
+const {
+  gist_token = '',
+  gist_id = '',
+  gist_filename = 'onedrive-token.json'
+} = process.env
+
 const gist = new Gist(gist_token, gist_id, gist_filename)
+
 const db = async (token) => {
   if (!token) {
     token = await gist.read()
   } else {
-    await gist.write(token)
+    gist.write(token)
   }
   return token
 }

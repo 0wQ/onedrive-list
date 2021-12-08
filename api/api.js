@@ -1,28 +1,28 @@
 const fetch = require('node-fetch')
 const { db } = require('./db')
+const { posix: pathPosix } = require('path')
 
 const {
-  base_dir = '/Public',
+  base_dir = '/',
   top = 500,
   client_id = '',
   client_secret = '',
-  redirect_uri = 'http://localhost',
+  redirect_uri = 'http://localhost:3000',
   auth_endpoint = 'https://login.microsoftonline.com/common/oauth2/v2.0',
   drive_api = 'https://graph.microsoft.com/v1.0/me/drive',
 } = process.env
 
 const timestamp = () => (Date.now() / 1000) | 0
-
 const checkExpired = (token) => {
-  const { expires_at } = token
+  const { expires_at = 0 } = token
   if (timestamp() > expires_at) {
-    console.log('Token expired')
+    console.info('Token expired.')
     return true
   }
 }
 
 async function acquireAccessToken(refresh_token) {
-  console.log('acquireAccessToken()', auth_endpoint)
+  if (client_id === '' || client_secret === '') throw new Error('client_id, client_secret is required.')
   const res = await fetch(`${auth_endpoint}/token`, {
     method: 'POST',
     body: `${new URLSearchParams({
@@ -35,49 +35,51 @@ async function acquireAccessToken(refresh_token) {
       'content-type': 'application/x-www-form-urlencoded',
     },
   })
-  return await storeToken(res)
+  const storeToken = async() => {
+    const { expires_in, access_token, refresh_token, error, error_description } = await res.json()
+    error && console.error(error_description)
+    const expires_at = timestamp() + expires_in
+    const token = { expires_at, access_token, refresh_token }
+    return await db(token)
+  }
+  return await storeToken()
 }
 
-async function storeToken(res) {
-  const { expires_in, access_token, refresh_token, error, error_description } = await res.json()
-  error && console.error(error_description)
-  const expires_at = timestamp() + expires_in
-  const token = { expires_at, access_token, refresh_token }
-  return await db(token)
-}
-
-let _token
+let _token = {}
 exports.getAccessToken = async () => {
-  if (_token && !checkExpired(_token)) {
-    console.log('Fetch access_token from memory.')
+  if (_token.access_token && !checkExpired(_token)) {
+    console.info('Fetch access_token from memory.')
     return _token.access_token
   }
+  console.info('Fetch access_token from database.')
   _token = await db()
-  console.log('Fetch access_token from database.')
-  if (!_token || checkExpired(_token)) {
+  if (_token.refresh_token && checkExpired(_token)) {
+    console.info('Fetch access_token from MS Graph.')
     _token = await acquireAccessToken(_token.refresh_token)
   }
-  return _token.access_token
+  if (!_token.refresh_token) {
+    console.error('refresh_token is required in database.')
+  }
+  return _token.access_token || ''
 }
 
-exports.getItem = async (path, access_token, isFolder = true, isRaw = false, isAlbum = false) => {
-  const wrapPathName = () => {
-    const p = base_dir ? base_dir + path : path
-    if (isFolder) {
-      return p.replace(/\/$/, '')
+exports.getItem = async (path, access_token, isRaw = false, isAlbum = false) => {
+  const isFolder = path.endsWith('/') || path === ''
+  const basePath = pathPosix.resolve('/', base_dir)
+  const wrapPath = (path) => {
+    let wrapedPath = pathPosix.join(basePath, pathPosix.resolve('/', path))
+    wrapedPath = wrapedPath.replace(/\/$/, '')
+    if (wrapedPath === '') {
+      return '/root/children'
     }
-    return p
+    return `/root:${encodeURIComponent(wrapedPath)}${isFolder ? ':/children' : ''}`
   }
-  const res = await fetch(
-    `${drive_api}/root:${encodeURI(
-      wrapPathName()
-    ).replace(/#/g, '%23')}${isFolder ? ':/children' : ''}?select=${isRaw ? '@microsoft.graph.downloadUrl,' : ''}name,size,lastModifiedDateTime,file${isAlbum ? ',image' : ''}&top=${top}`,
-    {
-      headers: {
-        Authorization: `bearer ${access_token}`,
-      },
+  const requestUrl = `${drive_api}${wrapPath(path)}?select=${isRaw ? '@microsoft.graph.downloadUrl,' : ''}${isAlbum ? 'image,' : ''}name,size,lastModifiedDateTime,file&top=${top}`
+  const res = await fetch(requestUrl, {
+    headers: {
+      Authorization: `bearer ${access_token}`,
     }
-  )
+  })
   const data = await res.json()
   delete data['@odata.context']
   delete data['@odata.nextLink']

@@ -5,12 +5,12 @@ const api = require('./api').default
 const app = express()
 
 process.on('uncaughtException', (e) => {
-  console.error('node.js process error\n', e)
+  console.error('Node.js process error.\n', e)
 })
 
 app.use((req, res, next) => {
   res.setTimeout(10 * 1000, () => {
-    console.log('Request Timeout.')
+    console.error('Request timeout.')
     return res.status(408).send('Request Timeout.')
   })
   next()
