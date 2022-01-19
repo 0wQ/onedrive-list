@@ -75,14 +75,14 @@ function preview(name, size) {
     case 'image':
       const loadImage = () => pushHtml(`<div class="image-wrapper"><img data-zoomable onload="progress.finish()" onerror="progress.finish()" alt="${name}" style="width: 100%; height: auto; position: relative;" src="${downloadUrl}"></div>`)
       loadImage()
-      loadScript('https://cdn.jsdelivr.net/npm/medium-zoom/dist/medium-zoom.min.js', () => {
+      loadScript('https://unpkg.zhimg.com/medium-zoom@1.0.6/dist/medium-zoom.min.js', () => {
         zoom = mediumZoom('[data-zoomable]')
       })
       break
     case 'video':
       pushHtml(`<div id="dplayer"></div>`, true, true)
       const loadDplayer = () => {
-        loadScript('https://cdn.jsdelivr.net/npm/dplayer/dist/DPlayer.min.js', () => {
+        loadScript('https://unpkg.zhimg.com/dplayer@1.26.0/dist/DPlayer.min.js', () => {
           const container = document.getElementById('dplayer')
           dp = new DPlayer({
             container: container,
@@ -102,7 +102,7 @@ function preview(name, size) {
         })
       }
       if (extension == 'flv') {
-        loadScript('https://cdn.jsdelivr.net/npm/flv.js/dist/flv.min.js', () => {
+        loadScript('https://unpkg.zhimg.com/flv.js@1.5.0/dist/flv.min.js', () => {
           loadDplayer()
         })
       } else {
@@ -112,7 +112,7 @@ function preview(name, size) {
     case 'audio':
       pushHtml(`<div id="aplayer" class="aplayer"></div>`, true, false, '.5rem .5rem')
       const loadAplayer = () => {
-        loadScript('https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.js', async () => {
+        loadScript('https://unpkg.zhimg.com/aplayer@1.10.1/dist/APlayer.min.js', async () => {
           const r = await fetch(`https://api.iwz.me/meting/api.php?server=netease&type=search&id=${name.replace(/\.[^/.]+$/, '')}`)
           const search = await r.json()
           let pic = ''
@@ -145,7 +145,7 @@ function preview(name, size) {
           progress.finish()
         })
       }
-      loadStyle('https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.css', () => loadAplayer())
+      loadStyle('https://unpkg.zhimg.com/aplayer@1.10.1/dist/APlayer.min.css', () => loadAplayer())
       break
     case 'pdf':
       // https://mozilla.github.io/pdf.js/web/viewer.html
