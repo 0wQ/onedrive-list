@@ -14,16 +14,17 @@ npm start
 </details>
 
 <details>
-<summary>部署到 Vercel</summary>
+<summary>点击按钮部署到 Vercel↓↓↓</summary>
 
 ![设置 Vercel 环境变量](https://s2.loli.net/2021/12/08/EyehqDkaN2KrzQu.png)
 </details>
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2F0wQ%2Fonedrive-list&env=base_dir,client_id,client_secret,redirect_uri,auth_endpoint,drive_api,gist_token,gist_id)
 
-### 1. 环境变量
+### 0. 本项目需要的环境变量
 
-> 如本地运行需填入 `.env` 文件
+> * Vercel 部署需在 Vercel 中配置环境变量<br>
+> * 本地部署需自行创建并填入到 `.env` 文件
 
 ```bash
 client_id =                                                           # 必填
@@ -41,15 +42,16 @@ top = 500                                                             # 选填
 ```
 
 
-### 2. 使用 [ms-graph-cli](https://github.com/beetcb/ms-graph-cli) 获取
+### 1. 使用 [ms-graph-cli](https://github.com/beetcb/ms-graph-cli) 获取
 
 `client_id` `client_secret` `redirect_uri` `auth_endpoint` `drive_api` `refresh_token`
 
 ```bash
-npx @beetcb/ms-graph-cli
+# 需安装 Node.js
+npx @beetcb/ms-graph-cli -l cn
 ```
 
-### 3. `gist_id`
+### 2. 获取 `gist_id`
 
 创建 [Gist](https://gist.github.com/) 文件名 `onedrive-token.json`，文件内容如下：
 
@@ -57,13 +59,13 @@ npx @beetcb/ms-graph-cli
 
 ```json
 {
-  "refresh_token": "{refresh_token}"
+  "refresh_token": "xxx"
 }
 ```
 
-即可从 Gist 链接 `https://gist.github.com/{username}/{gist_id}` 中获取 `gist_id`
+Gist 创建完成即可从链接 `https://gist.github.com/{username}/{gist_id}` 中获取 `gist_id`
 
-### 4. `gist_token`
+### 3. 获取 `gist_token`
 
 https://github.com/settings/tokens
 
