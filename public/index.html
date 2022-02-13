@@ -28,11 +28,17 @@
     body {
       margin: 0;
       padding: 0;
+      scrollbar-width: none;
+    }
+
+    html::-webkit-scrollbar {
+      display: none;
     }
 
     body {
       width: 100%;
-      height: 90vh;
+      min-height: 100vh;
+      min-height: calc(var(--vh, 1vh) * 100);
       background: #fafafa;
       display: flex;
       align-items: center;
@@ -75,7 +81,7 @@
 
     .container {
       width: calc(100% - 40px);
-      max-width: 900px;
+      max-width: 1024px;
       margin: 0 auto;
     }
 
@@ -160,21 +166,23 @@
       width: 100%;
       display: flex;
       justify-content: center;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      padding: 1.5rem 0 0;
     }
 
     .button {
       display: block;
-      background-color: #000;
-      color: #fff;
+      color: #333;
       cursor: pointer;
-      font-weight: bold;
       text-decoration: none;
-      padding: .7rem 2rem;
-      margin: 1.5rem 0 0;
+      font-weight: bold;
+      font-size: .95rem;
+      padding: .6rem 1.5rem;
       max-width: 180px;
       user-select: none;
-      border-radius: 999px;
-      box-shadow: 0 5px 10px rgba(0, 0, 0, .12);
+      border: 1px solid rgb(212, 212, 216);
+      border-radius: 10px;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -272,6 +280,14 @@
     <p>Powered&nbsp;by&nbsp;<a href="https://github.com/0wQ/onedrive-list" target="_blank">onedrive-list</a>,
       hosted&nbsp;on&nbsp;<a href="https://vercel.com" target="_blank">Vercel</a>.</p>
   </footer>
+  <script>
+    function appHeight() {
+      const doc = document.documentElement
+      doc.style.setProperty('--vh', (window.innerHeight * .01) + 'px')
+    }
+    window.addEventListener('resize', appHeight)
+    appHeight()
+  </script>
   <script src="./app.js" async></script>
 </body>
 

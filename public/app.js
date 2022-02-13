@@ -283,7 +283,7 @@ function folderView(data) {
     list += `<div class="item">
       <i class="${getIconClass(name, isFile)}"></i>${name}<div style="flex-grow: 1"></div>
       <span class="size">${formatSize(size)}</span>
-      <a href="${url}" data-name="${name}" data-size="${size}" data-type="${isFile ? 'file' : 'folder'}" title="Last Modified: ${lastModifiedDateTime}">${name}</a>
+      <a href="${url}" data-name="${name}" data-size="${size}" data-type="${isFile ? 'file' : 'folder'}" title="${new Date(lastModifiedDateTime).toLocaleString()}">${name}</a>
     </div>`
 
     !isFile && size >= CONFIG.preload_folder_size_min && size <= CONFIG.preload_folder_size_max && urlList.push(url)
