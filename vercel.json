@@ -1,7 +1,8 @@
 {
+  "cleanUrls": true,
   "headers": [
     {
-      "source": "((?!api).*)",
+      "source": "/((?!api).*)",
       "headers": [
         {
           "key": "Cache-Control",
