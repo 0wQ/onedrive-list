@@ -3,7 +3,7 @@ const CONFIG = {
   preload_enable: true,
   preload_once_max: 15,
   preload_all_max: 100,
-  preload_folder_size_min: 1024 * 1024 * 20,
+  preload_folder_size_min: 0,
   preload_folder_size_max: 1099511627776,
   fetch_cache: 'default', // default, no-cache, reload, force-cache, only-if-cached
   api: '/api',
@@ -57,15 +57,18 @@ function preview(name, size) {
   progress.start()
   breadcrumb(PATH)
 
-  const downloadUrl = path2Api(`${PATH}`, raw = true)
-  const pushHtml = (s, show_dl_btn = true, show_potplayer_btn = false, p = '1rem 1rem') => {
+  const downloadUrl = path2Api(`${PATH}`, true)
+  const pushHtml = (s, show_dl_btn = true, show_video_player_btn = false, p = '1rem 1rem') => {
     document.getElementById('list').innerHTML = `<div style="padding: ${p};">${s}</div>`
     let btn_container = ''
     if (show_dl_btn) {
-      btn_container += `<a class="button" data-dl="true" href="${downloadUrl}"><i class="far fa-arrow-alt-circle-down"></i> DOWNLOAD</a>`
+      btn_container += `<a class="button" data-dl="true" href="${downloadUrl}"><i class="far fa-arrow-alt-circle-down"></i> Download</a>`
     }
-    if (show_potplayer_btn && isWindows()) {
-      btn_container += `<a class="button" style="margin-left: 1rem;" data-dl="true" onclick="dp.pause();" href="potplayer://${new URL(downloadUrl, location.href).toString()}"><i class="fas fa-external-link-alt"></i> Open With Potplayer</a>`
+    if (show_video_player_btn && isWindows()) {
+      btn_container += `<a class="button" data-dl="true" onclick="dp.pause();" href="potplayer://${new URL(downloadUrl, location.href).toString()}"><i class="fas fa-external-link-alt"></i> Potplayer</a>`
+    }
+    if (show_video_player_btn) {
+      btn_container += `<a class="button" data-dl="true" onclick="dp.pause();" href="vlc://${new URL(downloadUrl, location.href).toString()}"><i class="fas fa-external-link-alt"></i> VLC</a>`
     }
     document.getElementById('btn').innerHTML = btn_container
   }
