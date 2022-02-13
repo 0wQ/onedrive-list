@@ -28,12 +28,12 @@ exports.default = async (req, res) => {
 
   res.setHeader('Access-Control-Allow-Origin', '*')
 
-  if (isRaw && '@microsoft.graph.downloadUrl' in data) {
+  if (isRaw && data['@microsoft.graph.downloadUrl']) {
     const downloadUrl = data['@microsoft.graph.downloadUrl']
-    res.setHeader('Cache-Control', `public, max-age=${3600 - 30}`)
-    res.redirect(downloadUrl)
-  } else {
-    res.setHeader('Cache-Control', 'public, max-age=120, s-maxage=60, stale-while-revalidate')
-    res.json(data)
+    res.setHeader('Cache-Control', `max-age=0, s-maxage=${3600 - 10}`)
+    res.redirect(301, downloadUrl)
+    return
   }
+  res.setHeader('Cache-Control', `public, max-age=120, immutable, s-maxage=${300 - 120}, stale-while-revalidate=${3600 * 3}`)
+    res.json(data)
 }
