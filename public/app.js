@@ -89,25 +89,31 @@ function preview(name, size) {
             theme: CONFIG.theme,
             screenshot: true,
             // preload: 'none',
-            playbackSpeed: [0.2, 0.5, 0.75, 1, 1.25, 1.5, 2, 3, 5, 10],
+            playbackSpeed: [10, 5, 3, 2, 1.5, 1, 0.5, 0.2],
             video: {
               url: downloadUrl,
-              type: extension == 'flv' ? 'flv' : 'auto',
-            }
+              type: extension == 'flv' ? 'customFlv' : 'auto',
+              customType: {
+                customFlv: (video, player) => {
+                  loadScript('https://npm.elemecdn.com/mpegts.js@1.6.10/dist/mpegts.js', () => {
+                    const flvPlayer = mpegts.createPlayer({
+                      type: 'flv',
+                      url: downloadUrl,
+                    })
+                    flvPlayer.attachMediaElement(video)
+                    flvPlayer.load()
+                  })
+                },
+              },
+            },
           })
-          if (extension == 'flv' || extension == 'avi') {
+          if (extension == 'avi') {
             dp.notice(`\`.${extension}\` video maybe not support.`)
           }
           progress.finish()
         })
       }
-      if (extension == 'flv') {
-        loadScript('https://npm.elemecdn.com/flv.js@1.6.2/dist/flv.min.js', () => {
-          loadDplayer()
-        })
-      } else {
-        loadDplayer()
-      }
+      loadDplayer()
       break
     case 'audio':
       pushHtml(`<div id="aplayer" class="aplayer"></div>`, true, false, '.5rem .5rem')
