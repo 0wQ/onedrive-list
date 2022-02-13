@@ -35,7 +35,7 @@ async function acquireAccessToken(refresh_token) {
       'content-type': 'application/x-www-form-urlencoded',
     },
   })
-  const storeToken = async() => {
+  const storeToken = async () => {
     const { expires_in, access_token, refresh_token, error, error_description } = await res.json()
     error && console.error(error_description)
     const expires_at = timestamp() + expires_in

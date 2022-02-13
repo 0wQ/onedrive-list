@@ -35,5 +35,5 @@ exports.default = async (req, res) => {
     return
   }
   res.setHeader('Cache-Control', `public, max-age=120, immutable, s-maxage=${300 - 120}, stale-while-revalidate=${3600 * 3}`)
-    res.json(data)
+  res.json(data)
 }
