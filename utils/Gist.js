@@ -1,6 +1,6 @@
-const { Octokit } = require('@octokit/core')
+import { Octokit } from '@octokit/core'
 
-const Gist = class {
+export default class {
   #octokit
   #gist_id
   #gist_filename
@@ -36,22 +36,3 @@ const Gist = class {
     // return JSON.parse(response.data.files[this.#gist_filename].content)
   }
 }
-
-const {
-  gist_token = '',
-  gist_id = '',
-  gist_filename = 'onedrive-token.json'
-} = process.env
-
-const gist = new Gist(gist_token, gist_id, gist_filename)
-
-const db = async (token) => {
-  if (!token) {
-    token = await gist.read()
-  } else {
-    gist.write(token)
-  }
-  return token
-}
-
-exports.db = db

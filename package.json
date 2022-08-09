@@ -2,21 +2,22 @@
   "name": "onedrive-list",
   "version": "1.0.0",
   "description": "OneDrive List",
-  "main": "api/index.js",
-  "scripts": {
-    "start": "node app.js",
-    "dev": "nodemon app.js",
-    "auth": "npx @beetcb/ms-graph-cli"
-  },
   "author": "Mizore",
   "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "start": "node --require dotenv/config app.js",
+    "dev": "nodemon app.js --exec \"node --require dotenv/config\"",
+    "auth": "npx @beetcb/ms-graph-cli",
+    "prod": "vercel --prod"
+  },
   "dependencies": {
-    "@octokit/core": "^3.5.1",
-    "node-fetch": "^2.6.6"
+    "@octokit/core": "^4.0.4",
+    "node-fetch": "^3.2.10"
   },
   "devDependencies": {
-    "dotenv": "^10.0.0",
-    "express": "^4.17.1",
-    "nodemon": "^2.0.15"
+    "dotenv": "^16.0.1",
+    "express": "^4.18.1",
+    "nodemon": "^2.0.19"
   }
 }

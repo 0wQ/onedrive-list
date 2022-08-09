@@ -1,12 +1,16 @@
 {
   "cleanUrls": true,
+  "rewrites": [
+    { "source": "/api/raw/:filename", "destination": "/api/raw" },
+    { "source": "/((?!api).*)", "destination": "/" }
+  ],
   "headers": [
     {
       "source": "/((?!api).*)",
       "headers": [
         {
           "key": "Cache-Control",
-          "value": "public, max-age=3600, immutable, stale-while-revalidate=604800"
+          "value": "public, max-age=600, immutable, stale-while-revalidate=604800"
         }
       ]
     }

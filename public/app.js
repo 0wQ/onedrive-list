@@ -3,8 +3,6 @@ const CONFIG = {
   preload_enable: true,
   preload_once_max: 15,
   preload_all_max: 100,
-  preload_folder_size_min: 0,
-  preload_folder_size_max: 1099511627776,
   fetch_cache: 'default', // default, no-cache, reload, force-cache, only-if-cached
   api: '/api',
 }
@@ -56,49 +54,88 @@ function handler(e) {
 function preview(name, size) {
   progress.start()
   breadcrumb(PATH)
+  document.getElementById('readme').style.display = 'none'
 
-  const downloadUrl = path2Api(`${PATH}`, true)
+  const downloadUrl = getApiUrl(`${PATH}`, 'raw', name)
   const pushHtml = (s, show_dl_btn = true, show_video_player_btn = false, p = '1rem 1rem') => {
     document.getElementById('list').innerHTML = `<div style="padding: ${p};">${s}</div>`
     let btn_container = ''
     if (show_dl_btn) {
-      btn_container += `<a class="button" data-dl="true" href="${downloadUrl}"><i class="far fa-arrow-alt-circle-down"></i> Download</a>`
-    }
-    if (show_video_player_btn && isWindows()) {
-      btn_container += `<a class="button" data-dl="true" onclick="dp.pause();" href="potplayer://${new URL(downloadUrl, location.href).toString()}"><i class="fas fa-external-link-alt"></i> Potplayer</a>`
+      btn_container += `<a class="button" data-dl="true" href="${downloadUrl}"><i class="far fa-arrow-alt-circle-down"></i>&nbsp;Download</a>`
     }
     if (show_video_player_btn) {
-      btn_container += `<a class="button" data-dl="true" onclick="dp.pause();" href="vlc://${new URL(downloadUrl, location.href).toString()}"><i class="fas fa-external-link-alt"></i> VLC</a>`
+      const url = new URL(downloadUrl, location.href).toString()
+      if (isWindows()) {
+        btn_container += `<a class="button" data-dl="true" onclick="dp.pause();" href="potplayer://${url}"><i class="fas fa-external-link-alt"></i>&nbsp;Potplayer</a>`
+        btn_container += `<a class="button" data-dl="true" onclick="dp.pause();" href="vlc://${url}"><i class="fas fa-external-link-alt"></i>&nbsp;VLC</a>`
+      } else if (isSafari()) {
+        btn_container += `<a class="button" data-dl="true" onclick="dp.pause();" href="vlc://${url}"><i class="fas fa-external-link-alt"></i>&nbsp;VLC</a>`
+        btn_container += `<a class="button" data-dl="true" onclick="dp.pause();" href="nplayer-${url}"><i class="fas fa-external-link-alt"></i>&nbsp;nPlayer</a>`
+      } else {
+        btn_container += `<a class="button" data-dl="true" onclick="dp.pause();" href="vlc://${url}"><i class="fas fa-external-link-alt"></i>&nbsp;VLC</a>`
+        btn_container += `<a class="button" data-dl="true" onclick="dp.pause();" href="intent:${url}#Intent;package=com.mxtech.videoplayer.ad;end"><i class="fas fa-external-link-alt"></i>&nbsp;MX Player Free</a>`
+        btn_container += `<a class="button" data-dl="true" onclick="dp.pause();" href="intent:${url}#Intent;package=com.mxtech.videoplayer.pro;end"><i class="fas fa-external-link-alt"></i>&nbsp;MX Player Pro</a>`
+        btn_container += `<a class="button" data-dl="true" onclick="dp.pause();" href="nplayer-${url}"><i class="fas fa-external-link-alt"></i>&nbsp;nPlayer</a>`
+      }
     }
     document.getElementById('btn').innerHTML = btn_container
   }
   const extension = getExtension(name)
   const fileType = getFileType(extension)
   switch (fileType) {
+    case 'md':
+      pushHtml(`<div class="markdown-body" id="item-markdoen-body"></div>`)
+      loadScript('https://fastly.jsdelivr.net/npm/marked/marked.min.js', async () => {
+        const res = await fetch(getApiUrl(`${PATH}`, 'text'), {
+          method: 'GET',
+          cache: CONFIG.fetch_cache,
+        })
+        if (res.status !== 200) return
+        const content = await res.text()
+        if (content === '') return
+        document.getElementById('item-markdoen-body').innerHTML = marked.parse(content)
+        progress.finish()
+      })
+      break
+    case 'code':
+    case 'text':
+      (async () => {
+        const res = await fetch(getApiUrl(PATH, 'text'), {
+          method: 'GET',
+          cache: CONFIG.fetch_cache,
+        })
+        if (res.status !== 200) return
+        const content = await res.text()
+        if (content === '') return
+        pushHtml(`<pre><code id="item-code-body"></code></pre>`)
+        document.getElementById('item-code-body').innerText = content
+        progress.finish()
+      })()
+      break
     case 'image':
-      const loadImage = () => pushHtml(`<div class="image-wrapper"><img data-zoomable onload="progress.finish()" onerror="progress.finish()" alt="${name}" style="width: 100%; height: auto; position: relative;" src="${downloadUrl}"></div>`)
-      loadImage()
-      loadScript('https://npm.elemecdn.com/medium-zoom@1.0.6/dist/medium-zoom.min.js', () => {
+      pushHtml(`<div class="image-wrapper"><img data-zoomable onload="progress.finish()" onerror="progress.finish()" alt="${name}" style="width: 100%; height: auto; position: relative;" src="${downloadUrl}"></div>`)
+      loadScript('https://fastly.jsdelivr.net/npm/medium-zoom@1.0.6/dist/medium-zoom.min.js', () => {
         zoom = mediumZoom('[data-zoomable]')
       })
       break
     case 'video':
       pushHtml(`<div id="dplayer"></div>`, true, true)
       const loadDplayer = () => {
-        loadScript('https://npm.elemecdn.com/dplayer@1.26.0/dist/DPlayer.min.js', () => {
+        loadScript('https://fastly.jsdelivr.net/npm/dplayer/dist/DPlayer.min.js', () => {
           const container = document.getElementById('dplayer')
           dp = new DPlayer({
             container: container,
             theme: CONFIG.theme,
             screenshot: true,
-            // preload: 'none',
+            preload: 'auto',
             playbackSpeed: [10, 5, 3, 2, 1.5, 1, 0.5, 0.2],
             video: {
               url: downloadUrl,
+              pic: getApiUrl(`${PATH}`, 'thumbnail'),
               type: extension == 'flv' ? 'customFlv' : 'auto',
               customType: {
                 customFlv: (video, player) => {
-                  loadScript('https://npm.elemecdn.com/mpegts.js@1.6.10/dist/mpegts.js', () => {
+                  loadScript('https://fastly.jsdelivr.net/npm/mpegts.js@1.6.10/dist/mpegts.js', () => {
                     const flvPlayer = mpegts.createPlayer({
                       type: 'flv',
                       url: downloadUrl,
@@ -110,7 +147,7 @@ function preview(name, size) {
               },
             },
           })
-          if (extension == 'avi') {
+          if (['avi', 'mkv', 'flv', 'wmv'].includes(extension)) {
             dp.notice(`\`.${extension}\` video maybe not support.`)
           }
           progress.finish()
@@ -121,7 +158,7 @@ function preview(name, size) {
     case 'audio':
       pushHtml(`<div id="aplayer" class="aplayer"></div>`, true, false, '.5rem .5rem')
       const loadAplayer = () => {
-        loadScript('https://npm.elemecdn.com/aplayer@1.10.1/dist/APlayer.min.js', async () => {
+        loadScript('https://fastly.jsdelivr.net/npm/aplayer/dist/APlayer.min.js', async () => {
           const r = await fetch(`https://api.iwz.me/meting/api.php?server=netease&type=search&id=${name.replace(/\.[^/.]+$/, '')}`)
           const search = await r.json()
           let pic = ''
@@ -144,17 +181,18 @@ function preview(name, size) {
             audio: [{
               name: name.replace(/\.[^/.]+$/, ''),
               url: downloadUrl,
-              cover: pic || 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7',
+              // cover: pic || 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7',
+              cover: getApiUrl(`${PATH}`, 'thumbnail'),
               lrc: lrc,
             }],
             theme: CONFIG.theme,
             loop: 'none',
-            // preload: 'none',
+            preload: 'auto',
           })
           progress.finish()
         })
       }
-      loadStyle('https://npm.elemecdn.com/aplayer@1.10.1/dist/APlayer.min.css', () => loadAplayer())
+      loadStyle('https://fastly.jsdelivr.net/npm/aplayer/dist/APlayer.min.css', () => loadAplayer())
       break
     case 'pdf':
       // https://mozilla.github.io/pdf.js/web/viewer.html
@@ -180,19 +218,6 @@ function preview(name, size) {
         <p><a target="_blank" href="https://view.officeapps.live.com/op/view.aspx?${new URLSearchParams({ src: new URL(downloadUrl + '&t=' + new Date().getTime(), location.href).toString() }).toString()}">Preview Online (Microsoft Office)</a></p>
         <p><a target="_blank" href="https://docs.google.com/viewer?${new URLSearchParams({ url: new URL(downloadUrl + '&t=' + new Date().getTime(), location.href).toString() }).toString()}">Preview Online (Google Docs)</a></p>
         `, true)
-      progress.finish()
-      break
-    case 'code':
-    case 'text':
-      pushHtml(`
-        <code>File Name: ${name}</code><br>
-        <code>File Size: ${formatSize(size)}</code><br>
-        <code>File Path: ${PATH}</code><br>
-        <code>File Link: ${new URL(downloadUrl, location.href).toString()}</code><br>`
-        + extension === 'txt'
-        ? `<p><a target="_blank" href="https://docs.google.com/viewer?${new URLSearchParams({ url: new URL(downloadUrl + '&t=' + new Date().getTime(), location.href).toString() }).toString()}">Preview Online (Google Docs)</a></p>`
-        : `<p>Sorry, we don't support previewing <code>${/\./.test(name) ? '.' + extension : name}</code> files as of today. You can <a data-dl="true" href="${downloadUrl}">download</a> the file directly.</p></div>`
-        , true)
       progress.finish()
       break
     default:
@@ -227,11 +252,10 @@ function onPopState(delay = 0) {
     prefetches.add(PATH)
   }
 
-  fetch(path2Api(PATH), {
+  fetch(getApiUrl(PATH, 'item'), {
     method: 'GET',
     cache: CONFIG.fetch_cache,
-  })
-    .then(r => {
+  }).then(r => {
       if (r.ok) {
         return r.json()
       } else {
@@ -257,6 +281,7 @@ function onPopState(delay = 0) {
       }
       window.isLoading = false
       console.timeEnd('Loading')
+      document.getElementById('readme').style.display = 'none'
       document.getElementById('app').classList.remove('unclickable')
       progress.finish()
       document.getElementById('list').classList.remove('hide')
@@ -288,8 +313,33 @@ function folderView(data) {
       <span class="size">${formatSize(size)}</span>
       <a href="${url}" data-name="${name}" data-size="${size}" data-type="${isFile ? 'file' : 'folder'}" title="${new Date(lastModifiedDateTime).toLocaleString()}">${name}</a>
     </div>`
+    !isFile && urlList.push(url)
 
-    !isFile && size >= CONFIG.preload_folder_size_min && size <= CONFIG.preload_folder_size_max && urlList.push(url)
+    if (['readme.md', 'readme.txt'].includes(name.toLowerCase())) {
+      const _path = PATH
+      const loadReadme = async () => {
+        const res = await fetch(getApiUrl(`${PATH}${name}`, 'text'), {
+          method: 'GET',
+          cache: CONFIG.fetch_cache,
+        })
+        if (res.status !== 200) return
+        const readme_content = await res.text()
+        if (/\.md/i.test(name)) {
+          loadScript('https://fastly.jsdelivr.net/npm/marked/marked.min.js', () => {
+            if (readme_content === '') return
+            const readme_html = marked.parse(readme_content)
+            if (_path !== PATH) return
+            document.getElementById('readme').innerHTML = `<div class="markdown-body">${readme_html}</div>`
+            document.getElementById('readme').style.display = 'block'
+          })
+        } else {
+          if (_path !== PATH) return
+          document.getElementById('readme').innerHTML = `<div class="markdown-body"><pre><code>${readme_content}</code></pre></div>`
+          document.getElementById('readme').style.display = 'block'
+        }
+      }
+      loadReadme()
+    }
   }
 
   const html = `<div style="min-width: 280px;">${list}</div>`
@@ -303,21 +353,21 @@ function folderView(data) {
     })
   }))
 }
-function path2Api(path = '/', raw = false) {
-  raw = raw ? '1' : '0'
-  return `${CONFIG.api}?${new URLSearchParams({ path, raw }).toString()}`
+function getApiUrl(path = '/', type = 'item', filename = '') {
+  const searchParams = `?${new URLSearchParams({ path }).toString()}`
+  const pathWithFilename = (type === 'raw' && filename) ? `/${encodeURIComponent(filename)}` : ''
+  return `${CONFIG.api}/${type}${pathWithFilename}${searchParams}`
 }
-function url2Path(url) {
-  const params = new URL(url || '/', location.href).searchParams
-  return params.get('path') || '/'
+function url2Path(url = '/') {
+  const _url = new URL(url, location.href)
+  const pathname = decodeURIComponent(_url.pathname)
+  if (pathname === '/' || pathname === '') {
+    return _url.searchParams.get('path') || '/'
+  }
+  return pathname
 }
 function path2Url(p = '/') {
-  const params = {}
-  if (p != '/') params.path = p
-  const params_str = new URLSearchParams(params).toString()
-  const search = params_str ? `?${params_str}` : ''
-  const url = `${location.pathname}${search}`
-  return url
+  return p.replace(/#/g, '%23')
 }
 function preload(p) {
   if (!CONFIG.preload_enable) return
@@ -329,7 +379,7 @@ function preload(p) {
 
   console.log(`${size} preload(): ${p}`)
 
-  const url = path2Api(p)
+  const url = getApiUrl(p, 'item')
   const prefetcher = document.createElement('link')
   prefetcher.rel = 'prefetch'
   prefetcher.href = url
@@ -358,7 +408,7 @@ function breadcrumb(p = '/') {
 
   for (let i = 0; i < len; i++) {
     const p2 = `${t.join('/')}/`
-    const name = t.pop() || '🚩 Home'
+    const name = t.pop() || '<span class="unselectable">🚩 Home</span>'
     const url = path2Url(p2)
     a.push(i == 0 ? name : `<a href="${url}">${name}</a>`)
     i == 0 || preload(p2)
@@ -366,10 +416,10 @@ function breadcrumb(p = '/') {
 
   a.reverse()
 
-  document.getElementById('breadcrumb').innerHTML = a.join(' / ')
+  document.getElementById('breadcrumb').innerHTML = a.join('<span class="unselectable"> </span>/<span class="unselectable"> </span>')
   document.getElementById('breadcrumb').classList.remove('hide')
 }
-function loadScript(url, callback, crossorigin = true, async = true) {
+function loadScript(url, callback, async = true, crossorigin = false) {
   if (loadScriptList.has(url)) {
     if (callback) setTimeout(callback, 0)
     return
@@ -385,7 +435,7 @@ function loadScript(url, callback, crossorigin = true, async = true) {
     document.head.appendChild(script)
   })
 }
-function loadStyle(url, callback, crossorigin = true) {
+function loadStyle(url, callback, crossorigin = false) {
   if (loadStyleList.has(url)) {
     if (callback) setTimeout(callback(), 0)
     return
@@ -475,4 +525,7 @@ function getIconClass(name, isFile) {
 }
 function isWindows() {
   return navigator.platform.indexOf('Win') > -1
+}
+function isSafari() {
+  return true || window.safari !== undefined
 }

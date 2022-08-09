@@ -3,14 +3,18 @@
 
 <head>
   <meta charset="utf-8">
-  <meta content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+  <meta content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no"
+    name="viewport">
   <meta content="ie=edge" http-equiv="X-UA-Compatible">
   <meta content="#fff" name="theme-color">
   <meta content="telephone=no" name="format-detection">
   <meta name="robots" content="noindex, nofollow">
   <meta name="google" content="notranslate">
   <title>Mizore's OneDrive</title>
-  <link rel="preload" href="./app.js" as="script">
+  <link rel="preload" href="/app.js" as="script">
+  <link rel="preload" href="https://fastly.jsdelivr.net/npm/marked/marked.min.js" as="script">
+  <link rel="preload" href="https://fastly.jsdelivr.net/npm/dplayer/dist/DPlayer.min.js" as="script">
+  <link href="https://fastly.jsdelivr.net/npm/github-markdown-css/github-markdown.min.css" rel="stylesheet">
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Lato:wght@400;700&display=swap');
 
@@ -20,8 +24,32 @@
         sarasa gothic sc, microsoft yahei, sans-serif, Apple Color Emoji,
         Segoe UI Emoji;
       --code-font-family: Fira Code, SF Mono, Consolas, Monaco, Ubuntu Mono, monospace;
+
       --selection-color: currentColor;
       --selection-bg-color: #79ffe1;
+      --text-color: #000;
+      --text-code-color: #d400ff;
+      --bg-body-color: #fafafa;
+      --bg-nav-color: #fff;
+      --bg-items-color: #fff;
+      --bg-item-a-color: rgba(0, 0, 0, .04);
+      --shadow-nav: 0 5px 10px rgba(0, 0, 0, .02);
+      --shadow-items: 0 5px 10px rgba(0, 0, 0, .05);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --selection-color: #000;
+        --selection-bg-color: #f81ce5;
+        --text-color: rgba(255, 255, 255, .75);
+        --text-code-color: #df41ff;
+        --bg-body-color: #2d3235;
+        --bg-nav-color: #2d3235;
+        --bg-items-color: #383E42;
+        --bg-item-a-color: rgba(255, 255, 255, .04);
+        --shadow-nav: 0 5px 10px rgba(0, 0, 0, .04);
+        --shadow-items: none;
+      }
     }
 
     html,
@@ -39,7 +67,8 @@
       width: 100%;
       min-height: 100vh;
       min-height: calc(var(--vh, 1vh) * 100);
-      background: #fafafa;
+      color: var(--text-color);
+      background-color: var(--bg-body-color);
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -65,10 +94,9 @@
       width: 100%;
       min-height: 2rem;
       padding: 0.8rem 0;
-      background: #fff;
-      color: #000;
+      background-color: var(--bg-nav-color);
       font-size: 1.4rem;
-      box-shadow: 0 5px 10px rgba(0, 0, 0, .02);
+      box-shadow: var(--shadow-nav);
       margin-bottom: 1.5rem;
     }
 
@@ -101,15 +129,15 @@
 
     .breadcrumb a {
       text-decoration: none;
-      color: #333;
+      color: var(--text-color);
     }
 
     .items {
       overflow-x: auto;
       display: flex;
       flex-flow: column nowrap;
-      background: #fff;
-      box-shadow: 0 5px 10px rgba(0, 0, 0, .05);
+      background-color: var(--bg-items-color);
+      box-shadow: var(--shadow-items);
       border-radius: 8px;
     }
 
@@ -117,7 +145,6 @@
       display: flex;
       align-items: center;
       text-decoration: none;
-      color: #000;
       padding: .8rem 1rem;
       transition: .2s all ease-in-out;
     }
@@ -129,7 +156,7 @@
 
     .item i {
       margin-right: .5rem;
-      min-width: 16px;
+      min-width: 20px;
       text-align: center;
     }
 
@@ -147,7 +174,7 @@
       height: 100%;
       text-indent: -9999px;
       opacity: 0;
-      background: rgba(0, 0, 0, .04);
+      background-color: var(--bg-item-a-color);
     }
 
     a {
@@ -173,12 +200,12 @@
 
     .button {
       display: block;
-      color: #333;
+      color: var(--text-color);
       cursor: pointer;
       text-decoration: none;
       font-weight: bold;
       font-size: .95rem;
-      padding: .6rem 1.5rem;
+      padding: .55rem 1rem;
       max-width: 180px;
       user-select: none;
       border: 1px solid rgb(212, 212, 216);
@@ -191,7 +218,7 @@
 
     @media not all and (any-hover: hover) {
       .item a {
-        background: rgba(0, 0, 0, .1);
+        background-color: rgba(0, 0, 0, .1);
         transition: opacity 0s;
         -webkit-tap-highlight-color: transparent;
       }
@@ -207,7 +234,7 @@
 
     footer {
       font-size: .8rem;
-      color: #666;
+      opacity: .85;
       width: calc(100% - 40px);
       padding: 1.6rem 0;
       text-align: center;
@@ -237,14 +264,14 @@
     }
 
     code {
-      color: rgb(189, 16, 224);
+      color: var(--text-code-color);
       font-family: var(--code-font-family);
       font-size: .9em;
       word-break: break-all;
     }
 
-    code::after,
-    code::before {
+    :not(pre)>code::after,
+    :not(pre)>code::before {
       content: '`';
     }
 
@@ -261,9 +288,38 @@
     .aplayer-author {
       display: none;
     }
+
+    .dplayer-setting-box-speed {
+      padding: 0 !important;
+    }
+
+    .readme {
+      display: none;
+      margin-top: 1.5rem !important;
+      padding: 1rem;
+      background-color: var(--bg-items-color) !important;
+      box-shadow: var(--shadow-items) !important;
+      border-radius: 8px;
+    }
+
+    .markdown-body {
+      box-sizing: border-box;
+      margin: 0 auto;
+      padding: 0;
+      background-color: transparent !important;
+    }
+
+    .markdown-body code {
+      color: currentColor;
+    }
+
+    .markdown-body :not(pre)>code::after,
+    .markdown-body :not(pre)>code::before {
+      content: '';
+    }
   </style>
-  <link href="https://npm.elemecdn.com/@fortawesome/fontawesome-free@6.0.0/css/all.min.css" rel="stylesheet">
-  <script src="https://npm.elemecdn.com/@badrap/bar-of-progress@0.1.2/dist/index.umd.js"></script>
+  <link href="https://fastly.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" rel="stylesheet">
+  <script src="https://fastly.jsdelivr.net/npm/@badrap/bar-of-progress@0.2.1/dist/index.umd.js"></script>
 </head>
 
 <body>
@@ -273,6 +329,7 @@
   <div class="container " id="app">
     <div class="breadcrumb hide" id="breadcrumb"></div>
     <div class="items hide" id="list"></div>
+    <div class="readme" id="readme"></div>
     <div class="button-container" id="btn"></div>
   </div>
   <div id="flex-container" style="flex-grow: 1;"></div>
@@ -288,7 +345,7 @@
     window.addEventListener('resize', appHeight)
     appHeight()
   </script>
-  <script src="./app.js" async></script>
+  <script src="/app.js" async></script>
 </body>
 
 </html>
