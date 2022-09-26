@@ -65,18 +65,11 @@ function preview(name, size) {
     }
     if (show_video_player_btn) {
       const url = new URL(downloadUrl, location.href).toString()
-      if (isWindows()) {
-        btn_container += `<a class="button" data-dl="true" onclick="dp.pause();" href="potplayer://${url}"><i class="fas fa-external-link-alt"></i>&nbsp;Potplayer</a>`
-        btn_container += `<a class="button" data-dl="true" onclick="dp.pause();" href="vlc://${url}"><i class="fas fa-external-link-alt"></i>&nbsp;VLC</a>`
-      } else if (isSafari()) {
-        btn_container += `<a class="button" data-dl="true" onclick="dp.pause();" href="vlc://${url}"><i class="fas fa-external-link-alt"></i>&nbsp;VLC</a>`
-        btn_container += `<a class="button" data-dl="true" onclick="dp.pause();" href="nplayer-${url}"><i class="fas fa-external-link-alt"></i>&nbsp;nPlayer</a>`
-      } else {
-        btn_container += `<a class="button" data-dl="true" onclick="dp.pause();" href="vlc://${url}"><i class="fas fa-external-link-alt"></i>&nbsp;VLC</a>`
-        btn_container += `<a class="button" data-dl="true" onclick="dp.pause();" href="intent:${url}#Intent;package=com.mxtech.videoplayer.ad;end"><i class="fas fa-external-link-alt"></i>&nbsp;MX Player Free</a>`
-        btn_container += `<a class="button" data-dl="true" onclick="dp.pause();" href="intent:${url}#Intent;package=com.mxtech.videoplayer.pro;end"><i class="fas fa-external-link-alt"></i>&nbsp;MX Player Pro</a>`
-        btn_container += `<a class="button" data-dl="true" onclick="dp.pause();" href="nplayer-${url}"><i class="fas fa-external-link-alt"></i>&nbsp;nPlayer</a>`
-      }
+      btn_container += `<a class="button" data-dl="true" onclick="dp.pause();" href="potplayer://${url}"><i class="fas fa-external-link-alt"></i>&nbsp;Potplayer</a>`
+      btn_container += `<a class="button" data-dl="true" onclick="dp.pause();" href="vlc://${url}"><i class="fas fa-external-link-alt"></i>&nbsp;VLC</a>`
+      btn_container += `<a class="button" data-dl="true" onclick="dp.pause();" href="nplayer-${url}"><i class="fas fa-external-link-alt"></i>&nbsp;nPlayer</a>`
+      btn_container += `<a class="button" data-dl="true" onclick="dp.pause();" href="intent:${url}#Intent;package=com.mxtech.videoplayer.ad;end"><i class="fas fa-external-link-alt"></i>&nbsp;MX Player Free</a>`
+      btn_container += `<a class="button" data-dl="true" onclick="dp.pause();" href="intent:${url}#Intent;package=com.mxtech.videoplayer.pro;end"><i class="fas fa-external-link-alt"></i>&nbsp;MX Player Pro</a>`
     }
     document.getElementById('btn').innerHTML = btn_container
   }
@@ -522,10 +515,4 @@ function getIconClass(name, isFile) {
   } else {
     return 'far fa-folder'
   }
-}
-function isWindows() {
-  return navigator.platform.indexOf('Win') > -1
-}
-function isSafari() {
-  return true || window.safari !== undefined
 }
