@@ -1,3 +1,6 @@
 .vercel
 .env
 node_modules
+.idea
+.well-known
+package.json
