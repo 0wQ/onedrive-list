@@ -52,17 +52,20 @@ function handler(e) {
 }
 
 function preview(name, size) {
+  document.title = name
   progress.start()
   breadcrumb(PATH)
   document.getElementById('readme').style.display = 'none'
 
   const downloadUrl = getApiUrl(`${PATH}`, 'raw', name)
+  console.log('preview:::', name, size, downloadUrl,PATH)
   const pushHtml = (s, show_dl_btn = true, show_video_player_btn = false, p = '1rem 1rem') => {
     document.getElementById('list').innerHTML = `<div style="padding: ${p};">${s}</div>`
     let btn_container = ''
     if (show_dl_btn) {
       btn_container += `<a class="button" data-dl="true" href="${downloadUrl}"><i class="far fa-arrow-alt-circle-down"></i>&nbsp;Download</a>`
     }
+    // video player button
     if (show_video_player_btn) {
       const url = new URL(downloadUrl, location.href).toString()
       btn_container += `<a class="button" data-dl="true" onclick="dp.pause();" href="potplayer://${url}"><i class="fas fa-external-link-alt"></i>&nbsp;Potplayer</a>`
@@ -194,8 +197,8 @@ function preview(name, size) {
         <code>File Name: ${name}</code><br>
         <code>File Size: ${formatSize(size)}</code><br>
         <code>File Path: ${PATH}</code><br>
-        <code>File Link: ${new URL(downloadUrl, location.href).toString()}</code><br>
-        <p><a target="_blank" href="https://mozilla.github.io/pdf.js/legacy/web/viewer.html?${new URLSearchParams({ file: new URL(downloadUrl, location.href).toString() }).toString()}">Preview Online (PDF.js)</a></p>
+        <code>File Link: ${location.host + downloadUrl}</code><br>
+        <p><a target="_blank" href="https://mozilla.github.io/pdf.js/legacy/web/viewer.html?file=${location.host + downloadUrl}">Preview Online (PDF.js)</a></p>
         <p><a target="_blank" href="https://docs.google.com/viewer?${new URLSearchParams({ url: new URL(downloadUrl + '&t=' + new Date().getTime(), location.href).toString() }).toString()}">Preview Online (Google Docs)</a></p>
         `, true)
       progress.finish()
@@ -220,7 +223,7 @@ function preview(name, size) {
         <code>File Path: ${PATH}</code><br>
         <code>File Link: ${new URL(downloadUrl, location.href).toString()}</code><br>
         <p>Sorry, we don't support previewing <code>${/\./.test(name) ? '.' + extension : name}</code> files as of today. You can <a data-dl="true" href="${downloadUrl}">download</a> the file directly.</p></div>`
-        , true)
+          , true)
       progress.finish()
   }
   document.getElementById('app').classList.remove('unclickable')
@@ -249,51 +252,51 @@ function onPopState(delay = 0) {
     method: 'GET',
     cache: CONFIG.fetch_cache,
   }).then(r => {
-      if (r.ok) {
-        return r.json()
-      } else {
-        throw `API: ${r.status}, ${r.statusText}`
-      }
-    })
-    .then(d => setTimeout(() => {
-      breadcrumb(PATH)
+    if (r.ok) {
+      return r.json()
+    } else {
+      throw `API: ${r.status}, ${r.statusText}`
+    }
+  })
+      .then(d => setTimeout(() => {
+        breadcrumb(PATH)
 
-      // console.log(d)
-      if ('value' in d) {
-        folderView(d)
-      } else if ('file' in d) {
-        preview(d.name, d.size)
-      } else if ('error' in d) {
-        const error = d.error
-        switch (error.code) {
-          case 'itemNotFound':
-            folderView({ value: [] })
-          default:
-            alert(error.code)
+        // console.log(d)
+        if ('value' in d) {
+          folderView(d)
+        } else if ('file' in d) {
+          preview(d.name, d.size)
+        } else if ('error' in d) {
+          const error = d.error
+          switch (error.code) {
+            case 'itemNotFound':
+              folderView({ value: [] })
+            default:
+              alert(error.code)
+          }
         }
-      }
-      window.isLoading = false
-      console.timeEnd('Loading')
-      document.getElementById('readme').style.display = 'none'
-      document.getElementById('app').classList.remove('unclickable')
-      progress.finish()
-      document.getElementById('list').classList.remove('hide')
-    }, delay))
-    .catch(e => setTimeout(() => {
-      window.isLoading = false
-      console.timeEnd('Loading')
-      document.getElementById('app').classList.remove('unclickable')
-      console.error(e)
-      progress.finish()
-      alert(e)
-    }, delay))
+        window.isLoading = false
+        console.timeEnd('Loading')
+        document.getElementById('readme').style.display = 'none'
+        document.getElementById('app').classList.remove('unclickable')
+        progress.finish()
+        document.getElementById('list').classList.remove('hide')
+      }, delay))
+      .catch(e => setTimeout(() => {
+        window.isLoading = false
+        console.timeEnd('Loading')
+        document.getElementById('app').classList.remove('unclickable')
+        console.error(e)
+        progress.finish()
+        alert(e)
+      }, delay))
 }
 function folderView(data) {
   const isIndex = PATH == '/'
   const parentPath = isIndex ? '/' : `${PATH.replace(/\/$/, '').split('/').slice(0, -1).join('/')}/`
   const parentUrl = path2Url(parentPath)
 
-  let list = `<div class="item" ${isIndex ? 'style="display: none;"' : ''}><i class="far fa-folder"></i>..<a href="${parentUrl}">...</a></div>`
+  let list = `<div class="item" ${isIndex ? 'style="display: none;"' : ''}><a href="${parentUrl}"><i class="far fa-folder"></i>...</a></div>`
 
   console.log('folder size:', data.value.length)
   const urlList = []
@@ -302,12 +305,13 @@ function folderView(data) {
     const { name, size, lastModifiedDateTime } = item
     const url = path2Url(`${PATH}${name}${isFile ? '' : '/'}`)
     list += `<div class="item">
-      <i class="${getIconClass(name, isFile)}"></i>${name}<div style="flex-grow: 1"></div>
-      <span class="size">${formatSize(size)}</span>
-      <a href="${url}" data-name="${name}" data-size="${size}" data-type="${isFile ? 'file' : 'folder'}" title="${new Date(lastModifiedDateTime).toLocaleString()}">${name}</a>
+      <a href="${new URL(url, location.href).toString()}" class="file" target="${isFile ?'_blank' : '_self'}" data-name="${name}" data-size="${size}"data-type="${isFile ? 'file' : 'folder'}" title="${new Date(lastModifiedDateTime).toLocaleString()}">
+      <i class="${getIconClass(name, isFile)}"></i>${name}<span class="size">${formatSize(size)}</span>
+      </a>
     </div>`
     !isFile && urlList.push(url)
 
+    console.log(name)
     if (['readme.md', 'readme.txt'].includes(name.toLowerCase())) {
       const _path = PATH
       const loadReadme = async () => {
@@ -349,6 +353,9 @@ function folderView(data) {
 function getApiUrl(path = '/', type = 'item', filename = '') {
   const searchParams = `?${new URLSearchParams({ path }).toString()}`
   const pathWithFilename = (type === 'raw' && filename) ? `/${encodeURIComponent(filename)}` : ''
+  if (type === 'raw') {
+    return `${CONFIG.api}/${type}${path}`
+  }
   return `${CONFIG.api}/${type}${pathWithFilename}${searchParams}`
 }
 function url2Path(url = '/') {
@@ -382,16 +389,16 @@ function preload(p) {
 }
 function formatSize(s = 0) {
   return s < 1024
-    ? s + ' B'
-    : s < Math.pow(1024, 2)
-      ? parseFloat(s / Math.pow(1024, 1)).toFixed(1) + ' KiB'
-      : s < Math.pow(1024, 3)
-        ? parseFloat(s / Math.pow(1024, 2)).toFixed(1) + ' MiB'
-        : s < Math.pow(1024, 4)
-          ? parseFloat(s / Math.pow(1024, 3)).toFixed(1) + ' GiB'
-          : s < Math.pow(1024, 5)
-            ? parseFloat(s / Math.pow(1024, 4)).toFixed(1) + ' TiB'
-            : '> 1PiB'
+      ? s + ' B'
+      : s < Math.pow(1024, 2)
+          ? parseFloat(s / Math.pow(1024, 1)).toFixed(1) + ' KiB'
+          : s < Math.pow(1024, 3)
+              ? parseFloat(s / Math.pow(1024, 2)).toFixed(1) + ' MiB'
+              : s < Math.pow(1024, 4)
+                  ? parseFloat(s / Math.pow(1024, 3)).toFixed(1) + ' GiB'
+                  : s < Math.pow(1024, 5)
+                      ? parseFloat(s / Math.pow(1024, 4)).toFixed(1) + ' TiB'
+                      : '> 1PiB'
 }
 function breadcrumb(p = '/') {
   p = p.replace(/\/$/, '')
